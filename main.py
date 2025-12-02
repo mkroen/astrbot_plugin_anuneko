@@ -57,11 +57,16 @@ class AnuNekoPlugin(Star):
     async def _create_session(self, session_key: str):
         headers = self._build_headers()
         model = self.session_models.get(session_key, "Orange Cat")
+        proxy = self._get_proxy()
+
+        logger.info(f"创建会话: proxy={proxy}, token={headers.get('x-token', '')[:20]}...")
 
         try:
-            async with httpx.AsyncClient(timeout=10, proxy=self._get_proxy()) as client:
+            async with httpx.AsyncClient(timeout=10, proxy=proxy) as client:
                 resp = await client.post(CHAT_API_URL, headers=headers, json={"model": model})
+                logger.info(f"创建会话响应: status={resp.status_code}")
                 resp_json = resp.json()
+                logger.info(f"创建会话响应内容: {resp_json}")
 
             chat_id = resp_json.get("chat_id") or resp_json.get("id")
             if chat_id:
@@ -69,7 +74,7 @@ class AnuNekoPlugin(Star):
                 await self._switch_model(session_key, chat_id, model)
                 return chat_id
         except Exception as e:
-            logger.error(f"创建会话失败: {e}")
+            logger.error(f"创建会话失败: {type(e).__name__}: {e}")
         return None
 
     async def _switch_model(self, session_key: str, chat_id: str, model_name: str):
