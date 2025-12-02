@@ -4,6 +4,7 @@ from astrbot.api import logger
 from astrbot.api.event import filter
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
 from astrbot.api.star import Context, Star, register
+from astrbot.core import AstrBotConfig
 
 # API 地址
 CHAT_API_URL = "https://anuneko.com/api/v1/chat"
@@ -22,13 +23,14 @@ MODELS = {
 
 @register("anuneko", "mkroen", "AnuNeko AI 对话插件", "1.0.0")
 class AnuNekoPlugin(Star):
-    def __init__(self, context: Context):
+    def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
+        self.config = config
         self.sessions = {}  # session_key -> chat_id (群聊用群ID，私聊用用户ID)
         self.session_models = {}  # session_key -> model_name
 
     def _get_config(self, key: str, default=None):
-        return self.context.get_config().get(key, default)
+        return self.config.get(key, default)
 
     def _build_headers(self):
         token = self._get_config("token", "")
@@ -57,16 +59,11 @@ class AnuNekoPlugin(Star):
     async def _create_session(self, session_key: str):
         headers = self._build_headers()
         model = self.session_models.get(session_key, "Orange Cat")
-        proxy = self._get_proxy()
-
-        logger.info(f"创建会话: proxy={proxy}, token={headers.get('x-token', '')[:20]}...")
 
         try:
-            async with httpx.AsyncClient(timeout=10, proxy=proxy) as client:
+            async with httpx.AsyncClient(timeout=10, proxy=self._get_proxy()) as client:
                 resp = await client.post(CHAT_API_URL, headers=headers, json={"model": model})
-                logger.info(f"创建会话响应: status={resp.status_code}")
                 resp_json = resp.json()
-                logger.info(f"创建会话响应内容: {resp_json}")
 
             chat_id = resp_json.get("chat_id") or resp_json.get("id")
             if chat_id:
@@ -157,14 +154,14 @@ class AnuNekoPlugin(Star):
 
         return result
 
-    @filter.command("切换模式")
+    @filter.command("neko切换模式")
     async def switch_mode(self, event: AstrMessageEvent):
-        """切换 AI 模型：/切换模式 1(橘猫) 或 2(黑猫)"""
+        """切换 AI 模型：/neko切换模式 1(橘猫) 或 2(黑猫)"""
         session_key = self._get_session_key(event)
-        arg = event.message_str.replace("切换模式", "").strip()
+        arg = event.message_str.replace("neko切换模式", "").strip()
 
         if arg not in MODELS:
-            yield event.plain_result("请指定模式：1(橘猫) 或 2(黑猫)\n用法：/切换模式 1")
+            yield event.plain_result("请指定模式：1(橘猫) 或 2(黑猫)\n用法：/neko切换模式 1")
             return
 
         model_key, model_name = MODELS[arg]
@@ -184,9 +181,9 @@ class AnuNekoPlugin(Star):
         else:
             yield event.plain_result(f"❌ 切换到 {model_name} 失败")
 
-    @filter.command("新会话")
+    @filter.command("neko新会话")
     async def new_session(self, event: AstrMessageEvent):
-        """创建新的对话会话"""
+        """创建新的对话会话：/neko新会话"""
         session_key = self._get_session_key(event)
 
         new_id = await self._create_session(session_key)
