@@ -1,0 +1,14 @@
+{
+    "token": {
+        "description": "AnuNeko Token",
+        "type": "string",
+        "hint": "从 anuneko.com 获取的 x-token",
+        "default": ""
+    },
+    "proxy": {
+        "description": "代理地址",
+        "type": "string",
+        "hint": "可选，HTTP 代理地址，如 http://127.0.0.1:7890",
+        "default": ""
+    }
+}
