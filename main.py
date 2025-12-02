@@ -12,8 +12,6 @@ STREAM_API_URL = "https://anuneko.com/api/v1/msg/{uuid}/stream"
 SELECT_CHOICE_URL = "https://anuneko.com/api/v1/msg/select-choice"
 SELECT_MODEL_URL = "https://anuneko.com/api/v1/user/select_model"
 
-WATERMARK = "\n\n—— 内容由 anuneko.com 提供"
-
 # 模型映射
 MODELS = {
     "1": ("Orange Cat", "橘猫"),
@@ -214,4 +212,4 @@ class AnuNekoPlugin(Star):
         chat_id = self.sessions[session_key]
         reply = await self._stream_reply(chat_id, text)
 
-        yield event.plain_result(reply + WATERMARK)
+        yield event.plain_result(reply)
