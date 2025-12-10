@@ -51,8 +51,11 @@ class AnuNekoPlugin(Star):
         return proxy if proxy else None
 
     def _get_session_key(self, event: AstrMessageEvent) -> str:
-        """获取会话标识：群聊用 unified_msg_origin，私聊用 user_id"""
-        return event.unified_msg_origin or event.get_sender_id()
+        """获取会话标识：群聊用 group_id（整个群共享），私聊用 sender_id"""
+        group_id = event.get_group_id()
+        if group_id:
+            return f"group_{group_id}"
+        return f"private_{event.get_sender_id()}"
 
     async def _create_session(self, session_key: str):
         headers = self._build_headers()
